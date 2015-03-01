@@ -10,6 +10,7 @@ describe('mongo-dump-stream', function() {
   var collections1 = {};
   var collections2 = {};
   it('populate the test database', function(done) {
+    this.timeout(5000);
     return async.series({
       connect: function(callback) {
         return mongodb.MongoClient.connect('mongodb://localhost:27017/mongo-dump-stream-test-1', function(err, _db) {
@@ -60,6 +61,7 @@ describe('mongo-dump-stream', function() {
     });
   });
   it('can dump the test database to a file', function(done) {
+    this.timeout(5000);
     var out = fs.createWriteStream(__dirname + '/test.db');
     return mds.dump(db1, out, function(err) {
       assert(!err);
@@ -68,6 +70,7 @@ describe('mongo-dump-stream', function() {
     });
   });
   it('can load the file into a second database', function(done) {
+    this.timeout(5000);
     return async.series({
       connect: function(callback) {
         return mongodb.MongoClient.connect('mongodb://localhost:27017/mongo-dump-stream-test-2', function(err, _db) {
@@ -94,6 +97,7 @@ describe('mongo-dump-stream', function() {
     });
   });
   it('the contents of the second database are correct', function(done) {
+    this.timeout(5000);
     return async.eachSeries(collectionNames, function(name, callback) {
       return async.series({
         create: function(callback) {
