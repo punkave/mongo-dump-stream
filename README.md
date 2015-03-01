@@ -127,6 +127,11 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 ## Changelog
 
+### CHANGES IN 0.1.2
+
+Dialed back size of test database so we don't have to change
+mocha's test timeouts.
+
 ### CHANGES IN 0.1.1
 
 Corrected examples and added more. No code changes.

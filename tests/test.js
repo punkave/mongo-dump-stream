@@ -41,7 +41,7 @@ describe('mongo-dump-stream', function() {
             populate: function(callback) {
               var objects = [];
               var i, j;
-              for (i = 0; (i < 1000); i++) {
+              for (i = 0; (i < 100); i++) {
                 var o = {};
                 for (j = 0; (j < 10); j++) {
                   var k = 'key' + j;
@@ -108,9 +108,9 @@ describe('mongo-dump-stream', function() {
         verify: function(callback) {
           return collections2[name].find().toArray(function(err, objects) {
             assert(!err);
-            assert(objects.length === 1000);
+            assert(objects.length === 100);
             var i, j;
-            for (i = 0; (i < 1000); i++) {
+            for (i = 0; (i < 100); i++) {
               var o = objects[i];
               for (j = 0; (j < 10); j++) {
                 var k = 'key' + j;
