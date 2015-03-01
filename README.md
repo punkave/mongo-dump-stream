@@ -1,6 +1,8 @@
 mongodump-stream
 ================
 
+[![Build Status](https://travis-ci.org/punkave/mongo-dump-stream.svg?branch=master)](https://travis-ci.org/punkave/mongo-dump-stream)
+
 <a href="http://apostrophenow.org/"><img src="https://raw.githubusercontent.com/punkave/mongo-dump-stream/master/logos/logo-box-madefor.png" align="right" /></a>
 
 ## What's it do?
