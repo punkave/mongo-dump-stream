@@ -34,6 +34,9 @@
     "mongodb": "^1.4.32",
     "yargs": "^3.4.4"
   },
+  "devDependencies": {
+    "mocha": "2.1.x"
+  },
   "bin": {
     "mongo-dump-stream": "./bin/mongo-dump-stream",
     "mongo-load-stream": "./bin/mongo-load-stream"
