@@ -125,6 +125,10 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 ## Changelog
 
+### CHANGES IN 0.1.1
+
+Corrected examples and added more. No code changes.
+
 ### CHANGES IN 0.1.0
 
 Initial release (with shiny unit tests, of course).
