@@ -1,0 +1,41 @@
+{
+  "name": "mongo-dump-stream",
+  "version": "0.1.0",
+  "description": "Dump and restore an entire MongoDB database via a single stream, without creating a folder of files",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests/test.js"
+  },
+    "repository": {
+    "type": "git",
+    "url": "https://github.com/punkave/mongo-dump-stream"
+  },
+  "keywords": [
+    "mongodb",
+    "mongodump",
+    "mongorestore",
+    "mongo",
+    "stream",
+    "mongo",
+    "dump",
+    "stream"
+  ],
+  "author": "P'unk Avenue LLC",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/punkave/mongo-dump-stream/issues"
+  },
+  "homepage": "https://github.com/punkave/mongo-dump-stream",
+  "dependencies": {
+    "async": "^0.9.0",
+    "bson": "^0.2.19",
+    "bson-stream": "0.0.5",
+    "lodash": "^3.3.1",
+    "mongodb": "^1.4.32",
+    "yargs": "^3.4.4"
+  },
+  "bin": {
+    "mongo-dump-stream": "./bin/mongo-dump-stream",
+    "mongo-load-stream": "./bin/mongo-load-stream"
+  }
+}
