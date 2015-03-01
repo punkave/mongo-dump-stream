@@ -52,9 +52,16 @@ Let's dump the database attached to an existing database connection opened with 
 ```javascript
 var mds = require('mongo-dump-stream');
 
+// Use existing connection made with the mongodb module
 return mds.dump(db, function(err) {
   if (!err) { // Everything  was sent }
 });
+
+// OR, use a URI
+return mds.dump('mongodb://localhost:27017/mydatabase', function(err) {
+  if (!err) { // Everything  was sent }
+});
+
 ```
 
 Now let's dump that database to a file instead (note the extra argument to `mds.dump`):
@@ -62,8 +69,6 @@ Now let's dump that database to a file instead (note the extra argument to `mds.
 ```javascript
 var fs = require('fs');
 var mds = require('mongo-dump-stream');
-var db = require('mongo').MongoClient.connect('mongodb://localhost:27017/mydatabase');
-
 var out = fs.createWriteStream('/path/to/file.db');
 return mds.dump(db, out, function(err) {
   if (!err) { // Everything was sent }
@@ -74,9 +79,14 @@ Now let's receive it from standard input:
 
 ```javascript
 var mds = require('mongo-dump-stream');
-var db = require('mongo').MongoClient.connect('mongodb://localhost:27017/myotherdatabase');
 
+// use existing database connection
 return mds.load(db, function(err) {
+  if (!err) { // Everything arrived }
+});
+
+// Use a URI
+return mds.load('mongodb://localhost:27017/my-other-database', function(err) {
   if (!err) { // Everything arrived }
 });
 ```
@@ -85,7 +95,6 @@ We can also read from a file:
 
 ```javascript
 var mds = require('mongo-dump-stream');
-var db = require('mongo').MongoClient.connect('mongodb://localhost:27017/myotherdatabase');
 var fin = fs.createReadStream('/path/to/file.db');
 
 return mds.load(db, fin, function(err) {
