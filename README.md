@@ -127,6 +127,10 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 ## Changelog
 
+### CHANGES IN 0.1.4
+
+Don't let `Cursor.nextObject` crash the stack; make sure we always invoke it asynchronously the next time. Now succeeds dumping a large database that failed due to this recursion issue.
+
 ### CHANGES IN 0.1.2-0.1.3
 
 Dialed back size of test database, increased mocha test timeouts.

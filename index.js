@@ -7,6 +7,7 @@ var BSON = bson.BSONPure.BSON;
 var fs = require('fs');
 var BSONStream = require('bson-stream');
 var mongodb = require('mongodb');
+var util = require('util');
 
 module.exports = {
   // If you leave out "stream" it'll be stdout
@@ -85,7 +86,7 @@ module.exports = {
                     type: 'document',
                     document: item
                   });
-                  iterate();
+                  return setImmediate(iterate);
                 });
               }
             },
@@ -105,7 +106,13 @@ module.exports = {
       return callback(null);
     });
     function write(o) {
-      out.write(BSON.serialize(o, false, true, false));
+      try {
+        out.write(BSON.serialize(o, false, true, false));
+      } catch (e) {
+        console.error('* * * * * * * *');
+        console.error(util.inspect(o, { depth: 10 }));
+        throw e;
+      }
     }
   },
   // If you leave out "stream" it'll be stdin
