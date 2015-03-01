@@ -9,6 +9,7 @@ Let's pipe an entire MongoDB database through the shell:
 
 ```
 npm install -g mongo-dump-stream
+
 mongo-dump-stream mongodb://host:port/db1 |
 mongo-load-stream mongodb://host:port/db2
 ```
