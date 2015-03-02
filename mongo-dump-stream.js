@@ -15,6 +15,7 @@ if (!uri) {
 
 return d.dump(uri, function(err) {
   if (err) {
+    console.error('ERROR:');
     console.error(err);
     process.exit(1);
   }

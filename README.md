@@ -127,6 +127,16 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 ## Changelog
 
+### CHANGES IN 0.2.0
+
+Much, much faster! The original code was about 30x slower than `mongodump` and `mongorestore`. The code is now only 3x slower, which is still much faster than your network.
+
+For example, I can dump a 741MB database in about 6 seconds and load it back up in about 60 seconds on a zippy laptop. Your mileage may vary of course.
+
+The version 2 stream format is more efficient and very little busywork is being done anymore. The raw mode of the MongoDB driver is used to avoid unnecessary BSON parsing.
+
+Backwards compatibility has been maintained to read (not write) the version 1 format.
+
 ### CHANGES IN 0.1.4
 
 Don't let `Cursor.nextObject` crash the stack; make sure we always invoke it asynchronously the next time. Now succeeds dumping a large database that failed due to this recursion issue.

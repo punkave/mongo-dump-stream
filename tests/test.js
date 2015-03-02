@@ -96,8 +96,46 @@ describe('mongo-dump-stream', function() {
       return done();
     });
   });
+
   it('the contents of the second database are correct', function(done) {
     this.timeout(5000);
+    return verify(done);
+  });
+
+  it('can load a v1 file into a third database', function(done) {
+    this.timeout(5000);
+    return async.series({
+      connect: function(callback) {
+        return mongodb.MongoClient.connect('mongodb://localhost:27017/mongo-dump-stream-test-3', function(err, _db) {
+          if (err) {
+            return callback(err);
+          }
+          db2 = _db;
+          return callback(null);
+        });
+      },
+      drop: function(callback) {
+        return db2.dropDatabase(function(err) {
+          assert(!err);
+          return callback(null);
+        });
+      },
+      load: function(callback) {
+        var fin = fs.createReadStream(__dirname + '/test.db.v1');
+        return mds.load(db2, fin, callback);
+      }
+    }, function(err) {
+      assert(!err);
+      return done();
+    });
+  });
+
+  it('the contents of the third database are correct', function(done) {
+    this.timeout(5000);
+    return verify(done);
+  });
+
+  function verify(done) {
     return async.eachSeries(collectionNames, function(name, callback) {
       return async.series({
         create: function(callback) {
@@ -129,5 +167,5 @@ describe('mongo-dump-stream', function() {
       assert(!err);
       return done();
     });
-  });
+  }
 });

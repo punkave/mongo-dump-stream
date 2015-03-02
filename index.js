@@ -8,6 +8,10 @@ var fs = require('fs');
 var BSONStream = require('bson-stream');
 var mongodb = require('mongodb');
 var util = require('util');
+var Concentrate = require('concentrate');
+var buffertools = require('buffertools');
+var crypto = require('crypto');
+var buffer = require('buffer');
 
 module.exports = {
   // If you leave out "stream" it'll be stdout
@@ -21,9 +25,11 @@ module.exports = {
     }
     var db;
     var out = stream;
+    var endOfCollection = crypto.pseudoRandomBytes(8).toString('base64');
     write({
       type: 'mongo-dump-stream',
-      version: '1'
+      version: '2',
+      endOfCollection: endOfCollection
     });
     return async.series({
       connect: function(callback) {
@@ -69,7 +75,7 @@ module.exports = {
               });
             },
             getDocuments: function(callback) {
-              var cursor = collection.find();
+              var cursor = collection.find({}, { raw: true });
               iterate();
               function iterate() {
                 return cursor.nextObject(function(err, item) {
@@ -78,14 +84,22 @@ module.exports = {
                   }
                   if (!item) {
                     write({
-                      type: 'endCollection'
+                      // Ensures we don't confuse this with
+                      // a legitimate database object
+                      endOfCollection: endOfCollection
                     });
                     return callback(null);
                   }
-                  write({
-                    type: 'document',
-                    document: item
-                  });
+                  // v2: just a series of actual data documents
+                  out.write(item);
+
+                  // If we didn't have the raw BSON document,
+                  // we could do this instead, but it would be very slow
+                  // write({
+                  //   type: 'document',
+                  //   document: item
+                  // });
+
                   return setImmediate(iterate);
                 });
               }
@@ -125,33 +139,48 @@ module.exports = {
     if (!stream) {
       stream = process.stdin;
     }
-    var bin = stream.pipe(new BSONStream());
+    var bin = stream.pipe(new BSONStream({ raw: true }));
 
     bin.on('error', function(err) {
       return callback(err);
     });
 
     var state = 'start';
-
+    var version;
     var collection;
+    var endOfCollection;
+    var insertQueue = [];
+    var insertQueueSize = 0;
 
     // State machine
 
     var processors = {
       start: function(item, callback) {
+        try {
+          item = BSON.deserialize(item);
+        } catch (e) {
+          return callback(e);
+        }
         if (typeof(item) !== 'object') {
           return callback(new Error('First BSON element is not an object'));
         }
         if (item.type !== 'mongo-dump-stream') {
           return callback(new Error('type property is not mongo-dump-stream'));
         }
-        if (item.version !== '1') {
+        version = item.version;
+        if (item.version > 2) {
           return callback(new Error('Incoming mongo-dump-stream is of a newer version, bailing out'));
         }
+        endOfCollection = item.endOfCollection;
         state = 'collection';
         return callback(null);
       },
       collection: function(item, callback) {
+        try {
+          item = BSON.deserialize(item);
+        } catch (e) {
+          return callback(e);
+        }
         if (item.type === 'endDatabase') {
           state = 'done';
           return callback(null);
@@ -189,14 +218,58 @@ module.exports = {
         });
       },
       documents: function(item, callback) {
-        if (item.type === 'endCollection') {
-          state = 'collection';
-          return setImmediate(callback);
+        if (version === '1') {
+          item = BSON.deserialize(item);
+          if (item.type === 'endCollection') {
+            state = 'collection';
+            return setImmediate(callback);
+          }
+          if (item.type !== 'document') {
+            return callback(new Error('Document expected'));
+          }
+          return collection.insert(item.document, callback);
         }
-        if (item.type !== 'document') {
-          return callback(new Error('Document expected'));
+
+        // Just scan for the unique random string that
+        // appears in the end-of-collection object. No need
+        // to waste time parsing BSON for this. Also
+        // leverage the fact that it won't ever be
+        // part of a large object to avoid scanning them all
+        if (item.length < 100) {
+          if (buffertools.indexOf(item, endOfCollection) !== -1) {
+            return flush(function(err) {
+              if (err) {
+                return callback(err);
+              }
+              state = 'collection';
+              return callback(null);
+            });
+          }
         }
-        return collection.insert(item.document, callback);
+        return async.series({
+          flushIfNeeded: function(callback) {
+            if (insertQueueSize + item.length <= 16777216) {
+              return setImmediate(callback);
+            }
+            return flush(callback);
+          },
+          insertInQueue: function(callback) {
+            insertQueueSize += item.length;
+            insertQueue.push(item);
+            return setImmediate(callback);
+          }
+        }, callback);
+
+        function flush(callback) {
+          // watch out for race condition
+          var insert = insertQueue;
+          insertQueue = [];
+          insertQueueSize = 0;
+          return collection.insert(insert, function(err) {
+            insertQueue = [];
+            return callback(err);
+          });
+        }
       }
     };
 
@@ -229,44 +302,17 @@ module.exports = {
         });
       },
       loadCollections: function(callback) {
-        var active = false;
-        bin.on('readable', function() {
-          if (active) {
-            // This should never happen, but I've received
-            // another readable event on a BSONStream when
-            // the previous one hasn't yet been exhausted.
-            // It would be Bad to start doubling up and
-            // not handling the objects in series. Fortunately we
-            // get another readable event when the buffer
-            // is truly exhausted.
-            return;
-          }
-          active = true;
-          var item;
-          // Keep calling bin.read() and invoking
-          // processors, but make sure we do it
-          // asynchronously. Otherwise this would
-          // be a simple while loop.
-          readNext();
-          function readNext() {
+        bin.on('data', function(item) {
+          bin.pause();
+          return processors[state](item, function(err) {
+            if (err) {
+              return callback(err);
+            }
             if (state === 'done') {
-              return setImmediate(callback);
+              return callback(null);
             }
-            var item = bin.read();
-            if (item === null) {
-              active = false;
-              return;
-            }
-            if (typeof(item) !== 'object') {
-              return new Error('Object expected');
-            }
-            return processors[state](item, function(err) {
-              if (err) {
-                return callback(err);
-              }
-              setImmediate(readNext);
-            });
-          }
+            bin.resume();
+          });
         });
       }
     }, callback);
