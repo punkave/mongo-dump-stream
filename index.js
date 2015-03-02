@@ -5,13 +5,10 @@ var _ = require('lodash');
 var bson = require('bson');
 var BSON = bson.BSONPure.BSON;
 var fs = require('fs');
-var BSONStream = require('bson-stream');
 var mongodb = require('mongodb');
 var util = require('util');
-var Concentrate = require('concentrate');
 var buffertools = require('buffertools');
 var crypto = require('crypto');
-var buffer = require('buffer');
 
 module.exports = {
   // If you leave out "stream" it'll be stdout
@@ -139,11 +136,67 @@ module.exports = {
     if (!stream) {
       stream = process.stdin;
     }
-    var bin = stream.pipe(new BSONStream({ raw: true }));
+    var buffer = new Buffer(16777216 * 3);
+    var readPos = 0;
+    var writePos = 0;
+    var retry;
+    var closed;
+    var paused = false;
 
-    bin.on('error', function(err) {
+    stream.on('data', function(chunk) {
+      if (writePos + chunk.length > buffer.length) {
+        // Despite our best efforts to pause streams,
+        // we have to allocate more memory
+        var _buffer = new Buffer(buffer.length * 2);
+        buffer.copy(_buffer);
+        buffer = _buffer;
+        console.error('overrun, reallocating to ' + buffer.length);
+      }
+      chunk.copy(buffer, writePos);
+      writePos += chunk.length;
+      // high water mark = pause
+      if (writePos >= 16777216 * 2) {
+        stream.pause();
+        paused = true;
+      }
+      if (retry) {
+        var _retry = retry;
+        retry = null;
+        return _retry();
+      }
+    });
+
+    stream.on('close', function() {
+      if (retry) {
+        return retry(new Error('Premature end of stream'));
+      }
+      closed = true;
+    });
+
+    stream.on('error', function(err) {
       return callback(err);
     });
+
+    function ensureInt32(callback) {
+      return ensureBytes(4, function(err) {
+        if (err) {
+          return callback(err);
+        }
+        return callback(null, (buffer[readPos]) + (buffer[readPos + 1] << 8) + (buffer[readPos + 2] << 16) + (buffer[readPos + 3] << 24));
+      });
+    }
+
+    function ensureBytes(length, callback) {
+      if (readPos + length <= writePos) {
+        return callback(null);
+      }
+      if (closed) {
+        return callback(new Error('Premature end of stream'));
+      }
+      retry = function() {
+        return ensureBytes(length, callback);
+      }
+    }
 
     var state = 'start';
     var version;
@@ -302,18 +355,45 @@ module.exports = {
         });
       },
       loadCollections: function(callback) {
-        bin.on('data', function(item) {
-          bin.pause();
-          return processors[state](item, function(err) {
+        return loadAndHandleDocuments(callback);
+        function loadAndHandleDocuments(callback) {
+          return ensureInt32(function(err, size) {
             if (err) {
               return callback(err);
             }
-            if (state === 'done') {
-              return callback(null);
-            }
-            bin.resume();
+            return ensureBytes(size, function(err) {
+              if (err) {
+                return callback(err);
+              }
+              var document = new Buffer(buffer.slice(readPos, readPos + size));
+              if (document[document.length - 1] !== 0) {
+                return callback(new Error('document is not null terminated'));
+              }
+
+              readPos += size;
+              if (readPos > 16777216) {
+                buffer.copy(buffer, 0, readPos, writePos);
+                writePos = writePos - readPos;
+                readPos = 0;
+              }
+              if (paused && (writePos - readPos < 16777216)) {
+                // low water mark = resume
+                stream.resume();
+                paused = false;
+              }
+
+              return processors[state](document, function(err) {
+                if (err) {
+                  return callback(err);
+                }
+                if (state === 'done') {
+                  return callback(null);
+                }
+                return loadAndHandleDocuments(callback);
+              });
+            });
           });
-        });
+        }
       }
     }, callback);
   }

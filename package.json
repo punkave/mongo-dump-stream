@@ -1,6 +1,6 @@
 {
   "name": "mongo-dump-stream",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Dump and restore an entire MongoDB database via a single stream, without creating a folder of files",
   "main": "index.js",
   "scripts": {
@@ -30,9 +30,7 @@
   "dependencies": {
     "async": "^0.9.0",
     "bson": "^0.2.19",
-    "bson-stream": "0.0.5",
     "buffertools": "^2.1.2",
-    "concentrate": "^0.2.3",
     "lodash": "^3.3.1",
     "mongodb": "^1.4.32",
     "yargs": "^3.4.4"

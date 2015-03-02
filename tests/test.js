@@ -92,6 +92,9 @@ describe('mongo-dump-stream', function() {
         return mds.load(db2, fin, callback);
       }
     }, function(err) {
+      if (err) {
+        console.error(err);
+      }
       assert(!err);
       return done();
     });
