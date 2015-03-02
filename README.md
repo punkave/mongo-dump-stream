@@ -131,6 +131,8 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 Compatible with node 0.10 and above, once again. Also: `mongo-load-stream` is now equal in speed to `mongorestore`! I know, I know! I'm shocked too. My goal was simply to replace the `bson-stream` module with a simple implementation that does not involve Node's notoriously buggy object streams, but once I implemented a good scheme of high and low water marks and reuse of a single buffer, performance went through the roof and I was able to saturate MongoDB.
 
+Also: don't crash if there are zero documents in a collection. (MongoDB responds angrily to bulk inserts of zero documents.)
+
 ### CHANGES IN 0.2.1
 
 For the time being at least, Node 0.11 or higher (or io.js) is a minimum requirement. This addresses issues reading from `bson-stream` in Node 0.10 with the otherwise vastly faster 0.2.x code. TODO: consider migrating the `bson-stream` code to a simple callback interface to avoid the issue and become 0.10 compatible again.

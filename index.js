@@ -314,6 +314,11 @@ module.exports = {
         }, callback);
 
         function flush(callback) {
+          if (!insertQueue.length) {
+            // MongoDB considers it an error to be asked
+            // to insert 0 documents ):
+            return setImmediate(callback);
+          }
           // watch out for race condition
           var insert = insertQueue;
           insertQueue = [];
