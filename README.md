@@ -127,6 +127,10 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 ## Changelog
 
+### CHANGES IN 0.2.1
+
+For the time being at least, Node 0.11 or higher (or io.js) is a minimum requirement. This addresses issues reading from `bson-stream` in Node 0.10 with the otherwise vastly faster 0.2.x code. TODO: consider migrating the `bson-stream` code to a simple callback interface to avoid the issue and become 0.10 compatible again.
+
 ### CHANGES IN 0.2.0
 
 Much, much faster! The original code was about 30x slower than `mongodump` and `mongorestore`. The code is now only 3x slower, which is still much faster than your network.

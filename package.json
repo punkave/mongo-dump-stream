@@ -1,6 +1,6 @@
 {
   "name": "mongo-dump-stream",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dump and restore an entire MongoDB database via a single stream, without creating a folder of files",
   "main": "index.js",
   "scripts": {
@@ -26,6 +26,7 @@
     "url": "https://github.com/punkave/mongo-dump-stream/issues"
   },
   "homepage": "https://github.com/punkave/mongo-dump-stream",
+  "engines" : { "node" : ">=0.11", "iojs" : ">=1.0.0" },
   "dependencies": {
     "async": "^0.9.0",
     "bson": "^0.2.19",
