@@ -127,6 +127,14 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 ## Changelog
 
+### CHANGES IN 0.3.2
+
+Refactored the asynchronous BSON reader into the new [read-async-bson](http://npmjs.org/package/read-async-bson) module. Check that out if you have a similar need.
+
+### CHANGES IN 0.3.1
+
+No code changes. Removed node version restrictions from `package.json` as the code has been fully compatible with `node 0.10` since version `0.3.0`.
+
 ### CHANGES IN 0.3.0
 
 Compatible with node 0.10 and above, once again. Also: `mongo-load-stream` is now equal in speed to `mongorestore`! I know, I know! I'm shocked too. My goal was simply to replace the `bson-stream` module with a simple implementation that does not involve Node's notoriously buggy object streams, but once I implemented a good scheme of high and low water marks and reuse of a single buffer, performance went through the roof and I was able to saturate MongoDB.
