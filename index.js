@@ -13,7 +13,7 @@ var reader = require('read-async-bson');
 
 module.exports = {
   // If you leave out "stream" it'll be stdout
-  dump: function(dbOrUri, stream, callback) {
+  dump: function(dbOrUri, stream, callback, opt) {
     if (arguments.length === 2) {
       callback = stream;
       stream = undefined;
@@ -21,6 +21,7 @@ module.exports = {
     if (!stream) {
       stream = process.stdout;
     }
+    var opt = opt || {};
     var db;
     var out = stream;
     var endOfCollection = crypto.pseudoRandomBytes(8).toString('base64');
@@ -50,6 +51,14 @@ module.exports = {
             return callback(err);
           }
           collections = _collections;
+          if (opt.only)
+          {
+            collections = _.filter(collections, function(collection){ return opt.only.indexOf(collection.collectionName) != -1; });
+          }
+          if (opt.except)
+          {
+            collections = _.filter(collections, function(collection){ return opt.except.indexOf(collection.collectionName) == -1; });
+          }
           return callback(null);
         });
       },
@@ -106,10 +115,18 @@ module.exports = {
         }, callback);
       },
       endDatabase: function(callback) {
+        out.once('drain', function()
+        {
+          setImmediate(callback);
+        })
         write({
           type: 'endDatabase'
         });
-        return setImmediate(callback);
+      },
+      disconnect: function(callback) {
+        db.close();
+        db = null;
+        callback(null);
       }
     }, function(err) {
       if (err) {
@@ -216,7 +233,6 @@ module.exports = {
           }
           return collection.insert(item.document, callback);
         }
-
         // Just scan for the unique random string that
         // appears in the end-of-collection object. No need
         // to waste time parsing BSON for this. Also
@@ -310,6 +326,11 @@ module.exports = {
           }
           return finalCallback(new Error('Premature end of stream'));
         });
+      },
+      disconnect: function(callback){
+        db.close();
+        db = null;
+        callback(null);
       }
     }, callback);
   }
