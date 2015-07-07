@@ -108,8 +108,7 @@ module.exports = {
       endDatabase: function(callback) {
         write({
           type: 'endDatabase'
-        });
-        return setImmediate(callback);
+        }, callback);
       }
     }, function(err) {
       if (err) {
@@ -117,8 +116,8 @@ module.exports = {
       }
       return callback(null);
     });
-    function write(o) {
-      out.write(BSON.serialize(o, false, true, false));
+    function write(o, callback) {
+      out.write(BSON.serialize(o, false, true, false), callback);
     }
   },
   // If you leave out "stream" it'll be stdin
@@ -314,4 +313,3 @@ module.exports = {
     }, callback);
   }
 };
-

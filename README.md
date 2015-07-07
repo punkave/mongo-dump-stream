@@ -127,6 +127,10 @@ Feel free to open issues on [github](http://github.com/punkave/mongo-dump-stream
 
 ## Changelog
 
+### CHANGES IN 0.3.3
+
+After writing the `endDatabase` marker, wait for the callback of `write` to fire before invoking our own callback. This makes it much easier to know when `mongo-dump-stream` is finished. Thanks to `qlayer` for this suggestion.
+
 ### CHANGES IN 0.3.2
 
 Refactored the asynchronous BSON reader into the new [read-async-bson](http://npmjs.org/package/read-async-bson) module. Check that out if you have a similar need.
