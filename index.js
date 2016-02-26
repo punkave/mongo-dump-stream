@@ -83,70 +83,29 @@ module.exports = {
               });
             },
             getDocuments: function(callback) {
-              var cursor = collection.find({}, { raw: true });
-              cursor.each(function (err, doc) {
-                if (err) {
-                  return callback(err);
-                }
-                
-                if (err) {
-                  return callback(err);
-                } else if (doc) {
-                  // v2: just a series of actual data documents
-                  out.write(doc);
-                } else {
+              var cursor = collection.find({}, { raw: true }).stream();
+              cursor.pipe(out, { end: false });
+              cursor.on('end', function() {
                   write({
                     // Ensures we don't confuse this with
                     // a legitimate database object
                     endOfCollection: endOfCollection
                   });
-                  cursor.close();
                   return callback(null);
-                }
-                
-                // v2: just a series of actual data documents
-                out.write(doc);
               });
               
-              // iterate();
-//               function iterate() {
-//                 return cursor.nextObject(function(err, item) {
-//                   if (err) {
-//                     return callback(err);
-//                   }
-//                   if (!item) {
-//                     write({
-//                       // Ensures we don't confuse this with
-//                       // a legitimate database object
-//                       endOfCollection: endOfCollection
-//                     });
-//                     return callback(null);
-//                   }
-//                   // v2: just a series of actual data documents
-//                   out.write(item);
-//
-//                   // If we didn't have the raw BSON document,
-//                   // we could do this instead, but it would be very slow
-//                   // write({
-//                   //   type: 'document',
-//                   //   document: item
-//                   // });
-//
-//                   return setImmediate(iterate);
-//                 });
-//               }
+              cursor.on('error', function(err) {
+                  return callback(err);
+              });
             },
           }, callback);
         }, callback);
       },
       endDatabase: function(callback) {
-        out.once('drain', function()
-        {
-          setImmediate(callback);
-        })
         write({
           type: 'endDatabase'
         });
+        callback(null);
       },
       disconnect: function(callback) {
         db.close();
