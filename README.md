@@ -5,6 +5,8 @@ mongodump-stream
 
 <a href="http://apostrophenow.org/"><img src="https://raw.githubusercontent.com/punkave/mongo-dump-stream/master/logos/logo-box-madefor.png" align="right" /></a>
 
+## **DEPRECATED FOR NEW PROJECTS. Newer versions of MongoDB (3.2.x) have equivalent utilities, and also fail to restore databases dumped with this utility.**
+
 ## What's it do?
 
 Let's pipe an entire MongoDB database through the shell:
