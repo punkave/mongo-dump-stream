@@ -31,7 +31,7 @@
     "bson": "^0.2.19",
     "buffertools": "^2.1.2",
     "lodash": "^3.3.1",
-    "mongodb": "^1.4.32",
+    "mongodb": "^2.2.19",
     "yargs": "^3.4.4",
     "read-async-bson": "^0.1.0"
   },
